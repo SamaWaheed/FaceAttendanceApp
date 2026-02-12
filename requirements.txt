@@ -1,8 +1,6 @@
 streamlit
 opencv-python
-face_recognition
 numpy
 pandas
 Pillow
-imutils
-scikit-learn
+face-recognition
