@@ -3,4 +3,4 @@ opencv-python
 numpy
 pandas
 Pillow
-face-recognition
+face-recognition>=1.3.0
