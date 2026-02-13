@@ -15,11 +15,33 @@ known_names = data["names"]
 
 attendance_set = set()
 
+
 if "attendance_df" not in st.session_state:
     st.session_state["attendance_df"] = pd.DataFrame(columns=["Name", "Date", "Time"])
 
-st.title("🔥 Face Attendance System 🔥")
+st.set_page_config(
+    page_title="Face Attendance System",
+    page_icon="🎓",
+    layout="wide"
+)
+
+st.title("Face Attendance System")
 st.write("Camera ON → Recognize faces → Mark attendance automatically")
+
+
+st.sidebar.header("📊 Attendance Stats")
+st.sidebar.write(f"Total attendees: {len(attendance_set)}")
+st.sidebar.write("Attendees list:")
+st.sidebar.dataframe(pd.DataFrame(list(attendance_set), columns=["Name"]))
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("ℹ️ Instructions")
+st.sidebar.write("""
+1. Make sure your camera is connected.
+2. Position your face clearly in front of the camera.
+3. The system will mark your attendance automatically.
+""")
+
 
 class VideoTransformer(VideoTransformerBase):
     def transform(self, frame):
@@ -39,8 +61,8 @@ class VideoTransformer(VideoTransformerBase):
                     name = known_names[best_match_index]
 
             top, right, bottom, left = face_loc
-            cv2.rectangle(img, (left, top), (right, bottom), (0,255,0), 2)
-            cv2.putText(img, name, (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
+            cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0), 2)
+            cv2.putText(img, name, (left, top-10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
 
             if name != "Unknown" and name not in attendance_set:
                 attendance_set.add(name)
@@ -49,10 +71,15 @@ class VideoTransformer(VideoTransformerBase):
                     st.session_state["attendance_df"],
                     pd.DataFrame([[name, now.date(), now.time().replace(microsecond=0)]], columns=["Name", "Date", "Time"])
                 ], ignore_index=True)
+                
+                # Optional: Notification for new attendance
+                st.toast(f"✅ {name} marked present!", icon="🎉")
         
         return img
 
+
 webrtc_streamer(key="face-attendance", video_transformer_factory=VideoTransformer)
+
 
 st.subheader("📋 Attendance Table")
 st.dataframe(st.session_state["attendance_df"])
@@ -62,8 +89,9 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_file_name = f"Attendance_{timestamp}.csv"
 
 st.download_button(
-    label="Download Attendance CSV",
+    label="⬇️ Download Attendance CSV",
     data=csv,
     file_name=csv_file_name,
-    mime="text/csv"
+    mime="text/csv",
+    key="download-csv"
 )
